@@ -2,7 +2,6 @@ import { Dropbox } from "dropbox";
 import { default as Options } from "@jhanssen/options";
 import { watch } from "chokidar";
 import { readFile } from "node:fs/promises";
-import { basename } from "node:path";
 
 const options = Options("video-upload-dropbox");
 const accessToken = options("access-token");
@@ -12,16 +11,22 @@ const uploadTimeout = options.int("upload-timeout", 5000);
 let timer = undefined;
 let files = [];
 
+function stripPath(p) {
+    if (p.indexOf(watchDirectory) === 0)
+        return p.substr(watchDirectory.length);
+    return p;
+}
+
 async function uploadFiles(files) {
     const dbx = new Dropbox({ accessToken });
 
     for (let f of files) {
         const contents = await readFile(f);
-        const ret = await dbx.filesUpload({ path: "/" + basename(f), contents: contents });
+        const ret = await dbx.filesUpload({ path: "/" + stripPath(f), contents: contents });
         if (ret.status !== 200) {
             throw new Error(`Failed to upload ${JSON.stringify(ret)}`);
         }
-        console.log("uploaded", basename(f));
+        console.log("uploaded", stripPath(f));
     }
 }
 
