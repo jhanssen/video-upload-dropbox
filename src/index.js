@@ -11,10 +11,16 @@ const uploadTimeout = options.int("upload-timeout", 5000);
 let timer = undefined;
 let files = [];
 
+function removeSlash(p) {
+    if (typeof p === "string" && p[0] === "/")
+        return p.substr(1);
+    return p;
+}
+
 function stripPath(p) {
     if (p.indexOf(watchDirectory) === 0)
-        return p.substr(watchDirectory.length).replace(/\//g, "_");
-    return p.replace(/\//g, "_");
+        return removeSlash(p.substr(watchDirectory.length));
+    return removeSlash(p);
 }
 
 async function uploadFiles(files) {
