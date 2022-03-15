@@ -13,8 +13,8 @@ let files = [];
 
 function stripPath(p) {
     if (p.indexOf(watchDirectory) === 0)
-        return p.substr(watchDirectory.length);
-    return p;
+        return p.substr(watchDirectory.length).replace(/\//g, "_");
+    return p.replace(/\//g, "_");
 }
 
 async function uploadFiles(files) {
