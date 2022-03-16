@@ -6,11 +6,21 @@ import { join as pathJoin } from "node:path";
 
 const options = Options("video-upload-dropbox");
 const refreshToken = options("refresh-token");
+const clientId = options("client-id");
+const clientSecret = options("client-secret");
 const watches = options.json("watches");
 const uploadTimeout = options.int("upload-timeout", 5000);
 
 if (typeof refreshToken !== "string" || refreshToken.length === 0) {
     console.error("no refresh token");
+    process.exit(1);
+}
+if (typeof clientId !== "string" || clientId.length === 0) {
+    console.error("no client id");
+    process.exit(1);
+}
+if (typeof clientSecret !== "string" || clientSecret.length === 0) {
+    console.error("no client secret");
     process.exit(1);
 }
 
@@ -68,7 +78,7 @@ function stripPath(p) {
 }
 
 async function uploadFiles(subfiles, filter) {
-    const dbx = new Dropbox({ refreshToken });
+    const dbx = new Dropbox({ clientId, clientSecret, refreshToken });
 
     for (let f of subfiles) {
         if (filter !== undefined && !filter.test(f)) {
