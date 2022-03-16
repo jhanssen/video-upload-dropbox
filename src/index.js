@@ -35,7 +35,7 @@ async function uploadFiles(subfiles) {
             }
             console.log("uploaded", stripPath(f));
         } catch (e) {
-            if (e.reason === "ECONNREFUSED") {
+            if (e.code === "ECONNREFUSED") {
                 // retry
                 addUploadFile(f);
             } else {
