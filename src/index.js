@@ -77,25 +77,25 @@ function stripPath(p) {
     return removeSlash(p);
 }
 
-async function uploadFiles(subfiles, filter) {
+async function uploadFiles(subfiles) {
     const dbx = new Dropbox({ clientId, clientSecret, refreshToken });
 
     for (let f of subfiles) {
-        if (filter !== undefined && !filter.test(f)) {
-            console.log("skipping", stripPath(f));
+        if (f.filter !== undefined && !f.filter.test(f.file)) {
+            console.log("skipping", stripPath(f.file));
             continue;
         }
-        const contents = await readFile(f);
+        const contents = await readFile(f.file);
         try {
-            const ret = await dbx.filesUpload({ path: "/" + stripPath(f), contents: contents });
+            const ret = await dbx.filesUpload({ path: "/" + stripPath(f.file), contents: contents });
             if (ret.status !== 200) {
                 throw new Error(`Failed to upload ${JSON.stringify(ret)}`);
             }
-            console.log("uploaded", stripPath(f));
+            console.log("uploaded", stripPath(f.file));
         } catch (e) {
             if (e.code === "ECONNREFUSED") {
                 // retry
-                addUploadFile(f, filter);
+                addUploadFile(f.file, f.filter);
             } else {
                 throw e;
             }
@@ -104,14 +104,14 @@ async function uploadFiles(subfiles, filter) {
 }
 
 function addUploadFile(file, filter) {
-    files.push(file);
+    files.push({ file, filter });
     if (timer !== undefined)
         clearTimeout(timer);
     timer = setTimeout(() => {
         const f = files;
         files = [];
 
-        uploadFiles(f, filter).then(() => {
+        uploadFiles(f).then(() => {
         }).catch(e => {
             console.error(e);
         });
