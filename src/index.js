@@ -81,21 +81,17 @@ async function uploadFiles(subfiles) {
     const dbx = new Dropbox({ clientId, clientSecret, refreshToken });
 
     for (let f of subfiles) {
-        if (f.filter !== undefined && !f.filter.test(f.file)) {
-            console.log("skipping", stripPath(f.file));
-            continue;
-        }
-        const contents = await readFile(f.file);
+        const contents = await readFile(f);
         try {
-            const ret = await dbx.filesUpload({ path: "/" + stripPath(f.file), contents: contents });
+            const ret = await dbx.filesUpload({ path: "/" + stripPath(f), contents: contents });
             if (ret.status !== 200) {
                 throw new Error(`Failed to upload ${JSON.stringify(ret)}`);
             }
-            console.log("uploaded", stripPath(f.file));
+            console.log("uploaded", stripPath(f));
         } catch (e) {
             if (e.code === "ECONNREFUSED") {
                 // retry
-                addUploadFile(f.file, f.filter);
+                addUploadFile(f);
             } else {
                 throw e;
             }
@@ -104,7 +100,13 @@ async function uploadFiles(subfiles) {
 }
 
 function addUploadFile(file, filter) {
-    files.push({ file, filter });
+    if (filter !== undefined && !filter.test(file)) {
+        console.log("skipping", stripPath(file));
+        return;
+    }
+    console.log("file added", file);
+
+    files.push(file);
     if (timer !== undefined)
         clearTimeout(timer);
     timer = setTimeout(() => {
@@ -125,7 +127,6 @@ console.log("watching", watches);
 for (const w of watches) {
     watch(w.dir, { ignoreInitial: true }).on("all", (event, path) => {
         if (event === "add") {
-            console.log("file added", path);
             addUploadFile(path, w.filter);
         }
     });
