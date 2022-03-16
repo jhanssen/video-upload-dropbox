@@ -11,42 +11,57 @@ const clientSecret = options("client-secret");
 const watches = options.json("watches");
 const uploadTimeout = options.int("upload-timeout", 5000);
 
+function ts() {
+    return new Date().toISOString().
+        replace(/T/, ' ').      // replace T with a space
+        replace(/\..+/, '');
+};
+
+const logger = {
+    log: function(...args) {
+        console.log.call(console, `${ts()}:`, ...args);
+    },
+    error: function(...args) {
+        console.error.call(console, `${ts()}:`, ...args);
+    }
+};
+
 if (typeof refreshToken !== "string" || refreshToken.length === 0) {
-    console.error("no refresh token");
+    logger.error("no refresh token");
     process.exit(1);
 }
 if (typeof clientId !== "string" || clientId.length === 0) {
-    console.error("no client id");
+    logger.error("no client id");
     process.exit(1);
 }
 if (typeof clientSecret !== "string" || clientSecret.length === 0) {
-    console.error("no client secret");
+    logger.error("no client secret");
     process.exit(1);
 }
 
 if (!(watches instanceof Array)) {
-    console.error("watches needs to be an array");
+    logger.error("watches needs to be an array");
     process.exit(1);
 }
 for (const w of watches) {
     if (typeof w !== "object") {
-        console.error("watch needs to be an object");
+        logger.error("watch needs to be an object");
         process.exit(1);
     }
     if (typeof w.dir !== "string") {
-        console.error("watch.dir needs to be a string");
+        logger.error("watch.dir needs to be a string");
         process.exit(1);
     }
     if (w.filter !== undefined) {
         if (typeof w.filter !== "string") {
-            console.error("watch.filter needs to be undefined or a string");
+            logger.error("watch.filter needs to be undefined or a string");
             process.exit(1);
         } else {
             // make filter be a regex
             try {
                 w.filter = new RegExp(w.filter);
             } catch (e) {
-                console.error("watch.filter not a valid regexp", e.message);
+                logger.error("watch.filter not a valid regexp", e.message);
                 process.exit(1);
             }
         }
@@ -87,7 +102,7 @@ async function uploadFiles(subfiles) {
             if (ret.status !== 200) {
                 throw new Error(`Failed to upload ${JSON.stringify(ret)}`);
             }
-            console.log("uploaded", stripPath(f));
+            logger.log("uploaded", stripPath(f));
         } catch (e) {
             if (e.code === "ECONNREFUSED") {
                 // retry
@@ -101,10 +116,10 @@ async function uploadFiles(subfiles) {
 
 function addUploadFile(file, filter) {
     if (filter !== undefined && !filter.test(file)) {
-        console.log("skipping", stripPath(file));
+        logger.log("skipping", stripPath(file));
         return;
     }
-    console.log("file added", file);
+    logger.log("file added", file);
 
     files.push(file);
     if (timer !== undefined)
@@ -115,14 +130,14 @@ function addUploadFile(file, filter) {
 
         uploadFiles(f).then(() => {
         }).catch(e => {
-            console.error(e);
+            logger.error(e);
         });
 
         timer = undefined;
     }, uploadTimeout);
 }
 
-console.log("watching", watches);
+logger.log("watching", watches);
 
 for (const w of watches) {
     watch(w.dir, { ignoreInitial: true }).on("all", (event, path) => {
