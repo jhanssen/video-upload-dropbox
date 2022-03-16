@@ -5,9 +5,14 @@ import { readFile } from "node:fs/promises";
 import { join as pathJoin } from "node:path";
 
 const options = Options("video-upload-dropbox");
-const accessToken = options("access-token");
+const refreshToken = options("refresh-token");
 const watches = options.json("watches");
 const uploadTimeout = options.int("upload-timeout", 5000);
+
+if (typeof refreshToken !== "string" || refreshToken.length === 0) {
+    console.error("no refresh token");
+    process.exit(1);
+}
 
 if (!(watches instanceof Array)) {
     console.error("watches needs to be an array");
@@ -63,7 +68,7 @@ function stripPath(p) {
 }
 
 async function uploadFiles(subfiles, filter) {
-    const dbx = new Dropbox({ accessToken });
+    const dbx = new Dropbox({ refreshToken });
 
     for (let f of subfiles) {
         if (filter !== undefined && !filter.test(f)) {
