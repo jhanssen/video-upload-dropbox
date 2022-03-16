@@ -23,16 +23,25 @@ function stripPath(p) {
     return removeSlash(p);
 }
 
-async function uploadFiles(files) {
+async function uploadFiles(subfiles) {
     const dbx = new Dropbox({ accessToken });
 
-    for (let f of files) {
+    for (let f of subfiles) {
         const contents = await readFile(f);
-        const ret = await dbx.filesUpload({ path: "/" + stripPath(f), contents: contents });
-        if (ret.status !== 200) {
-            throw new Error(`Failed to upload ${JSON.stringify(ret)}`);
+        try {
+            const ret = await dbx.filesUpload({ path: "/" + stripPath(f), contents: contents });
+            if (ret.status !== 200) {
+                throw new Error(`Failed to upload ${JSON.stringify(ret)}`);
+            }
+            console.log("uploaded", stripPath(f));
+        } catch (e) {
+            if (e.reason === "ECONNREFUSED") {
+                // retry
+                addUploadFile(f);
+            } else {
+                throw e;
+            }
         }
-        console.log("uploaded", stripPath(f));
     }
 }
 
