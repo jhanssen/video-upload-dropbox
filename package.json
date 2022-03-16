@@ -14,5 +14,10 @@
     "@jhanssen/options": "^1.0.31",
     "chokidar": "^3.5.3",
     "dropbox": "^10.26.0"
+  },
+  "devDependencies": {
+    "node-fetch": "^3.2.3",
+    "open": "^8.4.0",
+    "prompt": "^1.2.2"
   }
 }
