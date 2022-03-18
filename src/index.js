@@ -14,7 +14,7 @@ const uploadTimeout = options.int("upload-timeout", 5000);
 const tzoffset = (new Date()).getTimezoneOffset() * 60000;
 
 function ts() {
-    return new (new Date(Date.now() - tzoffset)).toISOString().
+    return (new Date(Date.now() - tzoffset)).toISOString().
         replace(/T/, ' ').      // replace T with a space
         replace(/\..+/, '');
 }
